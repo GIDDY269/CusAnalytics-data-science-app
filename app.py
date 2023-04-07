@@ -29,7 +29,7 @@ ltv_model = joblib.load('C:/Users/user/Data_Driven/models/Customer_lifetime_valu
 
 # read data
 featured_data = pd.read_csv('C:/Users/user/Data_Driven/artifacts/featured_data.csv')
-ltv_data = pd.read_csv('C:/Users/user/Data_Driven/artifacts/customer_life_time.csv')
+
 
 
 st.title('CusAnalytics')
