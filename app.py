@@ -12,10 +12,9 @@ import streamlit as st
 from streamlit_option_menu import option_menu
 import sys
 import matplotlib.pyplot as plt
-import seaborn as sns
 import plotly.graph_objs as go
 
-@st.cache
+@st.cache_data
 def convert_df(df):
     # IMPORTANT: Cache the conversion to prevent computation on every rerun
     return df.to_csv().encode('utf-8')
@@ -23,8 +22,8 @@ def convert_df(df):
 
 
 # load models
-purchase_day_ml = joblib.load('C:/Users/user/Data_Driven/models/Customer_next_purchase_day_model.joblib')
-ltv_model = joblib.load('C:/Users/user/Data_Driven/models/Customer_lifetime_value_model.joblib')
+purchase_day_ml = joblib.load('C:/Users/user/Data_Driven/models/Customer_next_purchase_day_model.joblib_1')
+ltv_model = joblib.load('C:/Users/user/Data_Driven/models/Customer_lifetime_value_model.joblib_1')
 
 
 # read data
@@ -47,22 +46,19 @@ with st.sidebar :
     
     
 #analysis
-customer = (pd.Series('ALL')).append(featured_data['Customer ID'])
+customer = (pd.concat([pd.Series('ALL'),featured_data['CustomerID']]))
 if selector == ('Exploratory Analysis'):
     st.title('Explore Your Data')
     select = st.selectbox('Select or search for a customerID from the the database',options=customer)
     if select == 'ALL' :
         st.write('see some important metrics and chart about the whole data connected')
-        fig = px.scatter(featured_data, x="Recency", y="Frequency", color="TotalRevenueCluster",
-                        hover_data=['TotalRevenue'])
-        st.plotly_chart(fig)
         col1,col2,col3 = st.columns(3)
         tab1,tab2,tab3 = st.tabs(['Recency','Frequency','Revenue'])
         with col1 :
-            st.metric('Number of unique customers',len(featured_data['Customer ID']))
-            with col2:
-                st.metric('Number of purchases made',featured_data['Frequency'].sum())
-                with col3 :
+            st.metric('Number of unique customers',len(featured_data['CustomerID']))
+        with col2:
+            st.metric('Number of purchases made',featured_data['Frequency'].sum())
+        with col3 :
                     st.metric('Total Revenue',round(featured_data['TotalRevenue'].sum()))
         with tab1:
             fig = px.scatter(featured_data, x="Recency", y="Frequency", color="RecencyCluster",
@@ -87,9 +83,9 @@ if selector == ('Exploratory Analysis'):
                     st.plotly_chart(fig)
     else :
         col1,col2,col3 = st.columns(3)
-        cus_info = featured_data[featured_data['Customer ID']==select]
+        cus_info = featured_data[featured_data['CustomerID']==select]
         with col1 :
-            st.metric('Number of unique customers',len(cus_info['Customer ID']))
+            st.metric('Number of unique customers',len(cus_info['CustomerID']))
         with col2:
             st.metric('Number of purchases made',cus_info['Frequency'])
         with col3 :
@@ -97,9 +93,9 @@ if selector == ('Exploratory Analysis'):
 
 if selector == ('Segmentation'):   
     st.title('Customer Segementation')
-    low_value = featured_data[featured_data['Segment_low_value']==1]
-    mid_value = featured_data[featured_data['Segment_Mid-Value']==1]
-    high_value = featured_data[featured_data['Segment_High-Value']==1]
+    low_value = featured_data[featured_data['Segment_low_value']==1].reset_index(drop='index')
+    mid_value = featured_data[featured_data['Segment_Mid-Value']==1].reset_index(drop='index')
+    high_value = featured_data[featured_data['Segment_High-Value']==1].reset_index(drop='index')
     
     col1,col2,col3 = st.columns(3)
     with col1:
@@ -147,18 +143,18 @@ if selector == 'Predictors':
         # Assign the max_proba values to a new column in the featured_data data frame
         featured_data['preds_proba'] = max_proba
         if select == '30_day_purchase':
-            df = featured_data[featured_data['predictions'] == 0]
+            df = featured_data[featured_data['predictions'] == 0].reset_index(drop='index')
             st.dataframe(df)
             csv = convert_df(df)
             st.download_button('Download Prediction',data=csv,file_name='customer purchase day.csv')
         if select == '60_day_purchase':
-            df = featured_data[featured_data['predictions'] == 1]
+            df = featured_data[featured_data['predictions'] == 1].reset_index(drop='index')
             st.dataframe(df)
             csv = convert_df(df)
             st.download_button('Download Prediction',data=csv,file_name='customer purchase day.csv')
         if select == '90_day_purchase':
-            df = featured_data[featured_data['predictions'] == 2]
-            st.dataframe(df)
+            df = featured_data[featured_data['predictions'] == 2].reset_index(drop='index')
+            st.dataframe(df.drop_duplicates())
             csv = convert_df(df)
             st.download_button('Download Prediction',data=csv,file_name='customer purchase day.csv')
     if select == 'ltv_predictor':

@@ -3,3 +3,6 @@ numpy
 streamlit
 streamlit_option_menu
 plotly
+scikit-learn
+matplotlib
+xgboost

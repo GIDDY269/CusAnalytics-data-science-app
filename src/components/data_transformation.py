@@ -63,6 +63,7 @@ class DataTransform:
         dataframe = pd.read_csv(data)
         dataframe['InvoiceDate'] = pd.to_datetime(dataframe['InvoiceDate'])
         dataframe['Revenue'] = dataframe['Price'] * dataframe['Quantity']
+        dataframe.rename(columns={'Customer ID':'CustomerID'},inplace=True)
 
         # Creating cohort analysis
         cus_past_df = dataframe[(dataframe['InvoiceDate'] >= pd.Timestamp(2009,12,1)) & (dataframe['InvoiceDate'] < 
@@ -72,33 +73,33 @@ class DataTransform:
                                                                                         pd.Timestamp(2011,12,9))].reset_index(drop=True)
         
         # get the distinst customers in cus_past_df
-        cus_df = pd.DataFrame(cus_past_df['Customer ID'].unique())
-        cus_df.columns  = ['Customer ID']
+        cus_df = pd.DataFrame(cus_past_df['CustomerID'].unique())
+        cus_df.columns  = ['CustomerID']
         
         
         # Create a dataframe with CustomerID and customers first purchase 
         # date in cus_next_quarter
-        cus_1st_purchase_in_next_quarter = cus_next_quarter.groupby('Customer ID')['InvoiceDate'].min().reset_index()
-        cus_1st_purchase_in_next_quarter.columns = ['Customer ID','FirstPurchaseDate']
+        cus_1st_purchase_in_next_quarter = cus_next_quarter.groupby('CustomerID')['InvoiceDate'].min().reset_index()
+        cus_1st_purchase_in_next_quarter.columns = ['CustomerID','FirstPurchaseDate']
         
         
-        cus_last_purchase_past_df = cus_past_df.groupby('Customer ID')['InvoiceDate'].max().reset_index()
-        cus_last_purchase_past_df.columns = ['Customer ID','LastPurchaseDate']
+        cus_last_purchase_past_df = cus_past_df.groupby('CustomerID')['InvoiceDate'].max().reset_index()
+        cus_last_purchase_past_df.columns = ['CustomerID','LastPurchaseDate']
         
         # Merge two dataframes cus_last_purchase_past_df and cus_1st_purchase_in_next_quarter
-        cus_purchase_dates = pd.merge(cus_last_purchase_past_df,cus_1st_purchase_in_next_quarter,on='Customer ID',how = 'left')
+        cus_purchase_dates = pd.merge(cus_last_purchase_past_df,cus_1st_purchase_in_next_quarter,on='CustomerID',how = 'left')
        #  time difference in days between customer's last purchase in the dataframe cus_last_purchase_past_df and the first purchase in the dataframe cus_1st_purchase_in_next_quarter.
         cus_purchase_dates['NextPurchaseDay'] = (cus_purchase_dates['FirstPurchaseDate'] - cus_purchase_dates['LastPurchaseDate']).dt.days
         
         # merge with cus_df
-        cus_df = pd.merge(cus_df,cus_purchase_dates[['Customer ID','NextPurchaseDay']],on='Customer ID',how='left')
+        cus_df = pd.merge(cus_df,cus_purchase_dates[['CustomerID','NextPurchaseDay']],on='CustomerID',how='left')
         cus_df.fillna(9999,inplace=True) #fill missing values
         
         # Recency
-        cus_max_purchase = cus_past_df.groupby('Customer ID')['InvoiceDate'].max().reset_index()
-        cus_max_purchase.columns = ['Customer ID','LastPurchaseDate']
+        cus_max_purchase = cus_past_df.groupby('CustomerID')['InvoiceDate'].max().reset_index()
+        cus_max_purchase.columns = ['CustomerID','LastPurchaseDate']
         cus_max_purchase['Recency'] = (cus_max_purchase['LastPurchaseDate'].max()-cus_max_purchase['LastPurchaseDate']).dt.days
-        cus_df = pd.merge(cus_df,cus_max_purchase[['Customer ID','Recency']],on='Customer ID')
+        cus_df = pd.merge(cus_df,cus_max_purchase[['CustomerID','Recency']],on='CustomerID')
         
         # recencycluster
         cus_df = self.cluster('Recency', cus_df)
@@ -106,19 +107,19 @@ class DataTransform:
         
         # Frequency
         #get order counts for each user and create a dataframe with it
-        cus_frequency = cus_past_df.groupby('Customer ID')['InvoiceDate'].count().reset_index()
-        cus_frequency.columns = ['Customer ID','Frequency']
-        cus_df = pd.merge(cus_df,cus_frequency,on = 'Customer ID')
+        cus_frequency = cus_past_df.groupby('CustomerID')['InvoiceDate'].count().reset_index()
+        cus_frequency.columns = ['CustomerID','Frequency']
+        cus_df = pd.merge(cus_df,cus_frequency,on = 'CustomerID')
         cus_df = self.cluster('Frequency', cus_df)
         cus_df = self.order_cluster(cus_df, 'Frequency', 'FrequencyCluster', True)
 
         # Revenue
-        cus_revenue = cus_past_df.groupby('Customer ID')['Revenue'].sum().reset_index()
-        cus_df = pd.merge(cus_df,cus_revenue,on='Customer ID')
+        cus_revenue = cus_past_df.groupby('CustomerID')['Revenue'].sum().reset_index()
+        cus_df = pd.merge(cus_df,cus_revenue,on='CustomerID')
         cus_df.rename(columns={'Revenue':'TotalRevenue'},inplace=True)
 
-        cus_revenue_mean = cus_past_df.groupby('Customer ID')['Revenue'].mean().reset_index()
-        cus_df = pd.merge(cus_df,cus_revenue_mean,on='Customer ID')
+        cus_revenue_mean = cus_past_df.groupby('CustomerID')['Revenue'].mean().reset_index()
+        cus_df = pd.merge(cus_df,cus_revenue_mean,on='CustomerID')
         cus_df.rename(columns={'Revenue':'MeanRevenue'},inplace =True)
         cus_df = self.cluster('TotalRevenue', cus_df)
         cus_df = self.order_cluster(cus_df, 'TotalRevenue', 'TotalRevenueCluster', True)
