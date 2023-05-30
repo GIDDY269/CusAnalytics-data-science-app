@@ -22,8 +22,8 @@ def convert_df(df):
 
 
 # load models
-purchase_day_ml = joblib.load('C:/Users/user/Data_Driven/models/Customer_next_purchase_day_model.joblib_1')
-ltv_model = joblib.load('C:/Users/user/Data_Driven/models/Customer_lifetime_value_model.joblib_1')
+purchase_day_ml = joblib.load('models/Customer_next_purchase_day_model.joblib_1')
+ltv_model = joblib.load('models/Customer_lifetime_value_model.joblib_1')
 
 
 # read data
