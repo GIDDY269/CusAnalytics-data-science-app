@@ -27,7 +27,7 @@ ltv_model = joblib.load('models/Customer_lifetime_value_model.joblib_1')
 
 
 # read data
-featured_data = pd.read_csv('C:/Users/user/Data_Driven/artifacts/featured_data.csv')
+featured_data = pd.read_csv('artifacts/featured_data.csv')
 
 
 
